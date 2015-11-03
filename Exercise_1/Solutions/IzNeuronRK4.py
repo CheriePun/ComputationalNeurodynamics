@@ -2,7 +2,7 @@
 Computational Neurodynamics
 Exercise 1
 
-Simulates Izhikevich's neuron model using the Euler method.
+Simulates Izhikevich's neuron model using the Runge-Kutta 4 method.
 Parameters for regular spiking, fast spiking and bursting
 neurons extracted from:
 
@@ -41,25 +41,41 @@ d = 8
 # c = -50
 # d = 2
 
-v = np.zeros(len(T))
-u = np.zeros(len(T))
+## Make a state vector that has a (v, u) pair for each timestep
+s = np.zeros((len(T), 2))
 
 ## Initial values
-v[0] = -65
-u[0] = -1
+s[0, 0] = -65
+s[0, 1] = -1
+
+
+# Note that s1[0] is v, s1[1] is u. This is Izhikevich equation in vector form
+def s_dt(s1, I):
+  v_dt = 0.04*(s1[0]**2) + 5*s1[0] + 140 - s1[1] + I
+  u_dt = a*(b*s1[0] - s1[1])
+  return np.array([v_dt, u_dt])
+
 
 ## SIMULATE
-for t in xrange(len(T)-1):
-  # Update v and u according to Izhikevich's equations
-  v[t+1] = v[t] + dt*(0.04*v[t]**2 + 5*v[t] + 140 - u[t] + I)
-  u[t+1] = u[t] + dt*(a * (b*v[t] - u[t]))
+for t in range(len(T)-1):
+
+  # Calculate the four constants of Runge-Kutta method
+  k_1 = s_dt(s[t], I)
+  k_2 = s_dt(s[t] + 0.5*dt*k_1, I)
+  k_3 = s_dt(s[t] + 0.5*dt*k_2, I)
+  k_4 = s_dt(s[t] + dt*k_3, I)
+
+  s[t+1] = s[t] + (1.0/6)*dt*(k_1 + 2*k_2 + 2*k_3 + k_4)
 
   # Reset the neuron if it has spiked
-  if v[t+1] >= 30:
-    v[t]   = 30          # Add a Dirac pulse for visualisation
-    v[t+1] = c           # Reset to resting potential
-    u[t+1] = u[t+1] + d  # Update recovery variable
+  if s[t+1, 0] >= 30:
+    s[t, 0]   = 30  # Add a Dirac pulse for visualisation
+    s[t+1, 0] = c   # Reset to resting potential
+    s[t+1, 1] += d  # Update recovery variable
 
+
+v = s[:, 0]
+u = s[:, 1]
 
 ## Plot the membrane potential
 plt.subplot(211)

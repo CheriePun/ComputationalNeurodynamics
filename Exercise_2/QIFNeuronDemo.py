@@ -2,7 +2,7 @@
 Computational Neurodynamics
 Exercise 2
 
-Simulates a Quadratic Integrate-and-fire neuron using
+Simulates a Quadratic Integrate-and-Fire neuron using
 the Euler method.
 
 (C) Murray Shanahan et al, 2015
@@ -42,8 +42,8 @@ for t in range(len(T)-1):
   if v[t+1] >= 30:
     v[t]   = 30  # Add Dirac pulse for visualisation
     v[t+1] = vr
-    
-    
+
+
 ## Plot the membrane potential
 plt.plot(T, v)
 plt.xlabel('Time (ms)')

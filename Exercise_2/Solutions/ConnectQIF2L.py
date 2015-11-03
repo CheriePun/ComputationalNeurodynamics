@@ -5,47 +5,48 @@ Exercise 2
 (C) Murray Shanahan et al, 2015
 """
 
-from IzNetwork import IzNetwork
+from QIFNetwork import QIFNetwork
 import numpy as np
 import numpy.random as rn
 
 
-def Connect2L(N0, N1):
+def ConnectQIF2L(N0, N1):
   """
-  Constructs two layers of Izhikevich neurons and connects them together.
-  Layers are arrays of N neurons. Parameters for regular spiking neurons
-  extracted from:
+  Constructs two layers of QIF neurons and connects them together.  Pretty much
+  like Connect2L, but with QIF instead of Izhikevich neurons. Layers are
+  arrays of N neurons.
 
-  http://www.izhikevich.org/publications/spikes.htm
+  Inputs:
+  N0, N1 -- Number of neurons in layer 0 and 1, respectively
   """
 
-  F = 50/np.sqrt(N1)  # Scaling factor
+  F = 60/np.sqrt(N1)  # Scaling factor
   D = 5               # Conduction delay
   Dmax = 10           # Maximum conduction delay
 
-  net = IzNetwork([N0, N1], Dmax)
+  net = QIFNetwork([N0, N1], Dmax)
 
   # Neuron parameters
   # Each layer comprises a heterogenous set of neurons, with a small spread
   # of parameter values, so that they exhibit some dynamical variation
-  # (To get a homogenous population of canonical "regular spiking" neurons,
-  # multiply r by zero.)
 
-  # Layer 0 (regular spiking)
+  # Layer 0
   r = rn.rand(N0)
   net.layer[0].N = N0
-  net.layer[0].a = 0.02 * np.ones(N0)
-  net.layer[0].b = 0.20 * np.ones(N0)
-  net.layer[0].c = -65 + 15*(r**2)
-  net.layer[0].d = 8 - 6*(r**2)
+  net.layer[0].R = 1.0
+  net.layer[0].tau = 10
+  net.layer[0].vr = -65 + 10*(r**2)
+  net.layer[0].vc = -50 + 5*(r**2)
+  net.layer[0].a = 0.2
 
-  # Layer 1 (regular spiking)
+  # Layer 1
   r = rn.rand(N1)
   net.layer[1].N = N1
-  net.layer[1].a = 0.02 * np.ones(N1)
-  net.layer[1].b = 0.20 * np.ones(N1)
-  net.layer[1].c = -65 + 15*(r**2)
-  net.layer[1].d = 8 - 6*(r**2)
+  net.layer[1].R = 1.0
+  net.layer[1].tau = 5
+  net.layer[1].vr = -65 + 10*(r**2)
+  net.layer[1].vc = -50 + 5*(r**2)
+  net.layer[1].a = 0.2
 
   ## Connectivity matrix (synaptic weights)
   # layer[i].S[j] is the connectivity matrix from layer j to layer i

@@ -1,9 +1,9 @@
 import numpy as np
 
 
-class IzNetwork:
+class QIFNetwork:
   """
-  Network of Izhikevich neurons.
+  Network of quadratic integrate-and-fire neurons.
   """
 
   def __init__(self, _neuronsPerLayer, _Dmax):
@@ -25,7 +25,7 @@ class IzNetwork:
     self.layer = {}
 
     for i, n in enumerate(_neuronsPerLayer):
-      self.layer[i] = IzLayer(n)
+      self.layer[i] = QIFLayer(n)
 
   def Update(self, t):
     """
@@ -40,7 +40,7 @@ class IzNetwork:
 
   def NeuronUpdate(self, i, t):
     """
-    Izhikevich neuron update function. Update one layer for 1 millisecond
+    QIF neuron update function. Update one layer for 1 millisecond
     using the Euler method.
 
     Inputs:
@@ -74,13 +74,13 @@ class IzNetwork:
           self.layer[i].I[idx] += F * S[idx, firings[k-1, 1]]
           k = k-1
 
-    # Update v and u using the Izhikevich model and Euler method
+    # Update v using the QIF equations and Euler method
     for k in xrange(int(1/dt)):
       v = self.layer[i].v
-      u = self.layer[i].u
 
-      self.layer[i].v += dt*(0.04*v*v + 5*v + 140 - u + self.layer[i].I)
-      self.layer[i].u += dt*(self.layer[i].a*(self.layer[i].b*v - u))
+      self.layer[i].v += dt*(
+          self.layer[i].a*(self.layer[i].vr - v)*(self.layer[i].vc - v) +
+          self.layer[i].R*self.layer[i].I) / self.layer[i].tau
 
       # Find index of neurons that have fired this millisecond
       fired = np.where(self.layer[i].v >= 30)[0]
@@ -94,15 +94,19 @@ class IzNetwork:
             self.layer[i].firings = np.array([[t, f]])
 
           # Reset the membrane potential after spikes
-          self.layer[i].v[f]  = self.layer[i].c[f]
-          self.layer[i].u[f] += self.layer[i].d[f]
+          # Here's a little hack to see if vr is array or scalar
+          if hasattr(self.layer[i].vr, "__len__"):
+            self.layer[i].v[f]  = self.layer[i].vr[f]
+          else:
+            self.layer[i].v[f]  = self.layer[i].vr
 
     return
 
 
-class IzLayer:
+class QIFLayer:
   """
-  Layer of Izhikevich neurons to be used inside an IzNetwork.
+  Layer of quadratic integrate-and-fire neurons to be used inside an
+  QIFNetwork.
   """
 
   def __init__(self, n):
@@ -113,11 +117,12 @@ class IzLayer:
     n -- Number of neurons in the layer
     """
 
-    self.N = n
-    self.a = np.zeros(n)
-    self.b = np.zeros(n)
-    self.c = np.zeros(n)
-    self.d = np.zeros(n)
+    self.N   = n
+    self.R   = np.zeros(n)
+    self.tau = np.zeros(n)
+    self.vr  = np.zeros(n)
+    self.vc  = np.zeros(n)
+    self.a   = np.zeros(n)
 
     self.S      = {}
     self.delay  = {}
